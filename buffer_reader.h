@@ -8,6 +8,7 @@
 #include <memory>
 
 struct buffer_reader {
+	enum class BYTES_ORDER { SWAP_BYTES, DO_NOT_SWAP_BYTES }; 
 	/**
 	 * Constructor that opens a file in binary mode (read only)
 	 */
@@ -21,6 +22,11 @@ struct buffer_reader {
 		}
 	}
 
+	buffer_reader(buffer_reader const&) = delete;
+	buffer_reader(buffer_reader&&) = delete;
+	buffer_reader& operator=(buffer_reader const&) = delete;
+	buffer_reader& operator=(buffer_reader&&) = delete;
+
   /**
 	 * Method that return the total file size
 	 */
@@ -32,14 +38,15 @@ struct buffer_reader {
 	 * all integers are stored in big-endian format.
 	 */
 	template <typename IntegerType, typename = std::enable_if_t<std::is_integral<IntegerType>::value>>
-	bool read(IntegerType& value) {
+	bool read(IntegerType& value, BYTES_ORDER operation=BYTES_ORDER::SWAP_BYTES) {
 		union {
 			char buffer[sizeof(IntegerType)];
 			IntegerType value;
 		} buffer_chunk{};
 		
 		file_.read(static_cast<char*>(buffer_chunk.buffer), sizeof(buffer_chunk.buffer));
-		swap_bytes(buffer_chunk.buffer, sizeof(buffer_chunk.buffer));
+		if (operation == BYTES_ORDER::SWAP_BYTES)
+			swap_bytes(buffer_chunk.buffer, sizeof(buffer_chunk.buffer));
 
 		value = buffer_chunk.value;
 		
