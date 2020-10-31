@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <type_traits>
 #include <utility>
+#include <memory>
 
 struct buffer_reader {
 	/**
@@ -16,6 +17,7 @@ struct buffer_reader {
 		{
 			std::filesystem::path const path{filename};
 			total_size_ = std::filesystem::file_size(path);
+			bytes_left_ = total_size_;
 		}
 	}
 
@@ -40,7 +42,24 @@ struct buffer_reader {
 		swap_bytes(buffer_chunk.buffer, sizeof(buffer_chunk.buffer));
 
 		value = buffer_chunk.value;
-		return sizeof(value) == file_.gcount();
+		
+		size_t bytes_read = file_.gcount();
+		bytes_left_ -= bytes_read;
+		return sizeof(value) == bytes_read;
+	}
+
+	bool read(std::unique_ptr<char[]>& buffer, size_t buffer_size)
+	{
+		file_.read(buffer.get(), buffer_size);
+		
+		size_t bytes_read = file_.gcount();
+		bytes_left_ -= bytes_read;
+		return buffer_size == file_.gcount();
+	}
+
+	bool has_more_bytes() const
+	{
+		return bytes_left_ > 0;
 	}
 
 private:
@@ -52,7 +71,8 @@ private:
 
 private:
 	std::ifstream file_;
-	size_t total_size_;
+	size_t total_size_{0};;
+	size_t bytes_left_{0};
 };
 
 #endif
