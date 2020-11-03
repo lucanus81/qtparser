@@ -27,6 +27,8 @@ private:
 	std::optional<atom_header_raw> read_atom_header();
 	std::unique_ptr<base_parsed_atom> parse_base_atom(atom_header_raw const& header);
 	std::unique_ptr<base_parsed_atom> parse_ftyp_atom(atom_header_raw const& header);
+	std::unique_ptr<base_parsed_atom> parse_header_only_atom(atom_header_raw const& header);
+	std::unique_ptr<base_parsed_atom> parse_wide_atom(atom_header_raw const& header);
 };
 
 #endif

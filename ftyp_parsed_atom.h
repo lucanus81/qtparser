@@ -1,6 +1,7 @@
 #ifndef _FTYP_PARSED_ATOM_H
 #define _FTYP_PARSED_ATOM_H
 
+#include "base_parsed_atom.h"
 #include <iostream>
 
 class ftype_parsed_atom : public base_parsed_atom
@@ -24,11 +25,12 @@ public:
 		return *this;
 	}
 
-	void print_atom_info() const
+	void print_atom_info() const override
 	{
-		std::cout <<size_ <<", " <<type_ <<", " <<major_brand_ <<", { ";
+		std::cout <<"atom: size = " <<size_ <<" bytes, type = " <<type_ <<", major_brand = '" 
+						  <<major_brand_ <<"', compatible brands { ";
 		for (auto const& brand : compatible_brands_)
-			std::cout <<brand <<' ';
+			std::cout <<"'" <<brand <<"' ";
 		std::cout <<"}\n";
 	}
 

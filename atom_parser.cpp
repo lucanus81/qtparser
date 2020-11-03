@@ -1,5 +1,6 @@
 #include "atom_parser.h"
 #include "ftyp_parsed_atom.h"
+#include "header_only_parsed_atom.h"
 
 #include <memory>
 #include <iostream>
@@ -56,10 +57,19 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw c
 	return ftyp;
 }
 
+std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
+{
+	return std::make_unique<header_only_parsed_atom>(header.size(), header.type());
+}
+
 std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
 {
 	if (header.type() == "ftyp")
 		return parse_ftyp_atom(header);
+	else
+		if (header.type() == "free" || header.type() == "skip" || header.type() == "wide")
+			return parse_header_only_atom(header);
+
 	return {};
 }
 
@@ -71,8 +81,8 @@ bool atom_parser::parse()
 		if (!header.has_value())
 			return false;
 		
-		std::cout <<header.value() <<' ';
-		std::cout <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
+		std::cout <<"DEBUG: " <<header.value() <<' ';
+		std::cout <<"DEBUG: " <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
 		if (header.value().is_non_container_type())
 		{
 			auto parsed_atom=parse_base_atom(header.value());

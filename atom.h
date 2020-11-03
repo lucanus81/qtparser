@@ -34,7 +34,7 @@ struct atom_header_raw
 
 	bool is_non_container_type() const
 	{
-		static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip"};
+		static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip", "wide"};
 		return non_container_types_.find(type()) != non_container_types_.cend();
 	}
 
