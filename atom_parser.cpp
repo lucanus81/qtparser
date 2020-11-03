@@ -59,7 +59,17 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw c
 
 std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
 {
-	return std::make_unique<header_only_parsed_atom>(header.size(), header.type());
+	auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
+
+	size_t unused_data{header.remaining_size()};
+	if (unused_data > 0)
+	{
+		auto buffer{ std::make_unique<char[]>(header.remaining_size()) };
+		if (!reader_.read(buffer, header.remaining_size()))
+			return {};
+	}
+
+	return header_only;
 }
 
 std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
