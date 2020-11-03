@@ -1,4 +1,6 @@
 #include "atom_parser.h"
+#include "ftyp_parsed_atom.h"
+
 #include <memory>
 #include <iostream>
 
@@ -23,6 +25,44 @@ std::optional<atom_header_raw> atom_parser::read_atom_header()
 	return header;
 }
 
+std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw const& header)
+{
+	auto ftyp = std::make_unique<ftype_parsed_atom>(header.size(), header.type()); 
+	
+	uint32_t major_raw{};
+	if (!reader_.read(major_raw, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
+		return {};
+	ftyp->major_brand(mnemonic_to_string(uint32_string_shared{major_raw}));
+
+	uint32_t minor_version{};
+	if (!reader_.read(minor_version))
+		return {};	
+	ftyp->minor_version(minor_version);
+	
+	size_t total_brands_size{header.remaining_size() - sizeof(major_raw) - sizeof(minor_version)};
+	size_t r{total_brands_size % sizeof(uint32_t)};
+	if (r != 0)
+		return {};
+	
+	size_t total_brands{total_brands_size / sizeof(uint32_t)};
+	for (size_t i=0; i<total_brands; ++i)
+	{
+		uint32_t brand{};
+		if (!reader_.read(brand, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
+			return {};
+		ftyp->add_compatible_brand(mnemonic_to_string(uint32_string_shared{brand}));
+	}
+
+	return ftyp;
+}
+
+std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
+{
+	if (header.type() == "ftyp")
+		return parse_ftyp_atom(header);
+	return {};
+}
+
 bool atom_parser::parse()
 {
 	while (reader_.has_more_bytes())
@@ -31,17 +71,21 @@ bool atom_parser::parse()
 		if (!header.has_value())
 			return false;
 		
-		char type[5]{};
-		for (size_t i=0; i<4; ++i)
-			type[i]=header.value().type_.mnemonic_name_[i];
-
-		std::cout <<"type = " <<type 
-		          <<", size = " <<header.value().size() 
-							<<", data size = " <<header.value().remaining_size() <<'\n';
-		auto buffer{ std::make_unique<char[]>(header.value().remaining_size()) };
-		if (!reader_.read(buffer, header.value().remaining_size()))
-			return false;
+		std::cout <<header.value() <<' ';
+		std::cout <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
+		if (header.value().is_non_container_type())
+		{
+			auto parsed_atom=parse_base_atom(header.value());
+			if (parsed_atom != nullptr)
+				parsed_atom->print_atom_info();
+		} else {
+			auto buffer{ std::make_unique<char[]>(header.value().remaining_size()) };
+			if (!reader_.read(buffer, header.value().remaining_size()))
+				return false;
+		}
 	}
 
 	return true;
 }
+
+
