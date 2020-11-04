@@ -25,6 +25,7 @@ private:
 	std::vector<std::unique_ptr<base_parsed_atom>> atoms_;
   
   std::vector<std::unique_ptr<base_parsed_atom>> parse_atoms(uint64_t atom_total_bytes);
+  void verify_file_type() const;
 
 	std::optional<atom_header_raw> read_atom_header();
 	std::unique_ptr<base_parsed_atom> parse_base_atom(atom_header_raw const& header);

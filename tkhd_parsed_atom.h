@@ -16,7 +16,7 @@ public:
 
 	void print_atom_info() const override
 	{
-		std::cout <<"atom: size = " <<size_ <<" bytes, type = "	
+		std::cout <<"INFO: atom: size = " <<size_ <<" bytes, type = "	
       <<type_ <<", track_id = " <<track_id_ <<", width = " <<track_width_ <<" pixels, height = "
       <<track_height_ <<" pixels\n";
   }

@@ -8,7 +8,6 @@ int main(int argc, char** argv) {
 	if (!command_line.parse(argc,argv))
 		return -1;
 	
-	std::cout <<"Processing " <<command_line.filename() <<'\n';
 	atom_parser parser{command_line.filename()};
 	parser.parse();
 

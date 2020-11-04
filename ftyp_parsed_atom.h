@@ -3,10 +3,12 @@
 
 #include "base_parsed_atom.h"
 #include <iostream>
+#include <algorithm>
 
 class ftype_parsed_atom : public base_parsed_atom
 {
 public:
+
 	ftype_parsed_atom(uint64_t size, std::string const& type)
 		: base_parsed_atom{size, type} {}
 
@@ -25,9 +27,18 @@ public:
 		return *this;
 	}
 
+  bool is_quicktime_file() const
+  {
+    static const std::string QUICKTIME_FORMAT{"qt  "};
+
+    return major_brand_ == QUICKTIME_FORMAT ||
+      std::any_of(compatible_brands_.cbegin(), compatible_brands_.cend(), 
+        [](auto const& brand) { return brand == QUICKTIME_FORMAT; });
+  }
+
 	void print_atom_info() const override
 	{
-		std::cout <<"atom: size = " <<size_ <<" bytes, type = " <<type_ <<", major_brand = '" 
+		std::cout <<"INFO: atom: size = " <<size_ <<" bytes, type = " <<type_ <<", major_brand = '" 
 						  <<major_brand_ <<"', compatible brands { ";
 		for (auto const& brand : compatible_brands_)
 			std::cout <<"'" <<brand <<"' ";

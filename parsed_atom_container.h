@@ -13,7 +13,7 @@ public:
   
   void print_atom_info() const override
   {
-    std::cout <<"atom container: size = " <<size_ <<" bytes, type = " <<type_ <<"\n";
+    std::cout <<"INFO: atom container: size = " <<size_ <<" bytes, type = " <<type_ <<"\n";
     for (auto&& child : children_)
       child->print_atom_info();
   }

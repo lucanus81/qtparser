@@ -171,8 +171,6 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
 		if (!header.has_value())
 			return {};
   	
-    std::cout <<"DEBUG: " <<header.value() <<' ';
-		std::cout <<"DEBUG: " <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
 	  if (header.value().is_non_container_type()) {
       auto parsed_atom=parse_base_atom(header.value());
       if (parsed_atom != nullptr) {
@@ -200,10 +198,24 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
   return current_atoms;
 }
 
+void atom_parser::verify_file_type() const
+{
+  if (atoms_.size() == 0)
+    return;
+  
+  ftype_parsed_atom *ftyp=dynamic_cast<ftype_parsed_atom*>(atoms_.front().get());
+  if (ftyp == nullptr || !ftyp->is_quicktime_file())
+      std::cout <<"WARN: the specified file doesn't seem to be a MOV file\n";
+}
+
 bool atom_parser::parse()
 {
-  auto atoms = parse_atoms(reader_.size());
-  for (auto&& a : atoms)
+  atoms_ = parse_atoms(reader_.size());
+  std::cout <<"INFO: File Summary \n";
+  verify_file_type();
+  
+  std::cout <<"\nINFO: Atoms Summary\n";
+  for (auto&& a : atoms_)
     a->print_atom_info();
 
 	return true;
