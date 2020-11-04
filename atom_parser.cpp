@@ -14,23 +14,23 @@
  */
 std::optional<atom_header_raw> atom_parser::read_atom_header()
 {
-	uint32_t full_atom_size;
-	if (!reader_.read(full_atom_size))
-		return {};
-	uint32_t atom_type;
-	if (!reader_.read(atom_type, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
-		return {};
+  uint32_t full_atom_size;
+  if (!reader_.read(full_atom_size))
+    return {};
+  uint32_t atom_type;
+  if (!reader_.read(atom_type, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
+    return {};
 	
-	atom_header_raw header{full_atom_size, atom_type, 0};
-	if (full_atom_size == atom_header_raw::HAS_EXTENDED_SIZE)
-	{
-		uint64_t extended_size;
-		if (!reader_.read(extended_size))
-			return {};
-		header.extended_size_ = extended_size;	
-	}
+  atom_header_raw header{full_atom_size, atom_type, 0};
+  if (full_atom_size == atom_header_raw::HAS_EXTENDED_SIZE)
+  {
+    uint64_t extended_size;
+    if (!reader_.read(extended_size))
+      return {};
+    header.extended_size_ = extended_size;	
+  }
 
-	return header;
+  return header;
 }
 
 /**
@@ -38,31 +38,31 @@ std::optional<atom_header_raw> atom_parser::read_atom_header()
  */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw const& header)
 {
-	auto ftyp = std::make_unique<ftype_parsed_atom>(header.size(), header.type()); 
-	
-	uint32_t major_raw{};
-	if (!reader_.read(major_raw, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
-		return {};
-	ftyp->major_brand(mnemonic_to_string(uint32_string_shared{major_raw}));
+  auto ftyp = std::make_unique<ftype_parsed_atom>(header.size(), header.type()); 
 
-	uint32_t minor_version{};
-	if (!reader_.read(minor_version))
-		return {};	
-	ftyp->minor_version(minor_version);
+  uint32_t major_raw{};
+  if (!reader_.read(major_raw, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
+    return {};
+  ftyp->major_brand(mnemonic_to_string(uint32_string_shared{major_raw}));
+
+  uint32_t minor_version{};
+  if (!reader_.read(minor_version))
+    return {};	
+  ftyp->minor_version(minor_version);
+
+  size_t total_brands_size{header.remaining_size() - sizeof(major_raw) - sizeof(minor_version)};
+  size_t r{total_brands_size % sizeof(uint32_t)};
+  if (r != 0)
+    return {};
 	
-	size_t total_brands_size{header.remaining_size() - sizeof(major_raw) - sizeof(minor_version)};
-	size_t r{total_brands_size % sizeof(uint32_t)};
-	if (r != 0)
-		return {};
-	
-	size_t total_brands{total_brands_size / sizeof(uint32_t)};
-	for (size_t i=0; i<total_brands; ++i)
-	{
-		uint32_t brand{};
-		if (!reader_.read(brand, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
-			return {};
-		ftyp->add_compatible_brand(mnemonic_to_string(uint32_string_shared{brand}));
-	}
+  size_t total_brands{total_brands_size / sizeof(uint32_t)};
+  for (size_t i=0; i<total_brands; ++i)
+  {
+    uint32_t brand{};
+    if (!reader_.read(brand, buffer_reader::BYTES_ORDER::DO_NOT_SWAP_BYTES))
+      return {};
+    ftyp->add_compatible_brand(mnemonic_to_string(uint32_string_shared{brand}));
+  }
 
 	return ftyp;
 }
@@ -149,15 +149,15 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw c
  */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
 {
-	auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
+  auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
 
-	size_t unused_data{header.remaining_size()};
-	if (unused_data > 0)
-	{
-		auto buffer{ std::make_unique<char[]>(header.remaining_size()) };
-		if (!reader_.read(buffer, header.remaining_size()))
-			return {};
-	}
+  size_t unused_data{header.remaining_size()};
+  if (unused_data > 0)
+  {
+    auto buffer{ std::make_unique<char[]>(header.remaining_size()) };
+    if (!reader_.read(buffer, header.remaining_size()))
+      return {};
+  }
 
 	return header_only;
 }
@@ -167,11 +167,11 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_heade
  */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
 {
-	if (header.type() == "ftyp")
-		return parse_ftyp_atom(header);
-	else
-		if (header.type() == "free" || header.type() == "skip" || header.type() == "wide")
-			return parse_header_only_atom(header);
+  if (header.type() == "ftyp")
+    return parse_ftyp_atom(header);
+  else
+    if (header.type() == "free" || header.type() == "skip" || header.type() == "wide")
+      return parse_header_only_atom(header);
     else
       if (header.type() == "tkhd")
         return parse_tkhd_atom(header);
@@ -193,36 +193,36 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
 
   while (bytes_read < atom_total_bytes)
   {
-  	std::optional<atom_header_raw> header{read_atom_header()};
-		if (!header.has_value())
-			return {};
-  	
-	  if (header.value().is_non_container_type()) {
+    std::optional<atom_header_raw> header{read_atom_header()};
+    if (!header.has_value())
+      return {};
+
+    if (header.value().is_non_container_type()) 
+    {
       auto parsed_atom=parse_base_atom(header.value());
       if (parsed_atom != nullptr) 
       {
         current_atoms.push_back(std::move(parsed_atom));
         bytes_read += header.value().size();
       }
-    } else
-        if (header.value().is_container_type()) 
-        {
-          std::vector<std::unique_ptr<base_parsed_atom>> children = parse_atoms(header.value().remaining_size());
-          auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
-          for (auto&& child : children)
-            container_atom->add_child(std::move(child));
-          current_atoms.push_back(std::move(container_atom));
+    } else 
+      if (header.value().is_container_type()) 
+      {
+        std::vector<std::unique_ptr<base_parsed_atom>> children = parse_atoms(header.value().remaining_size());
+        auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
+        for (auto&& child : children)
+          container_atom->add_child(std::move(child));
+        current_atoms.push_back(std::move(container_atom));
 
-          bytes_read += header.value().size();  
-        } else 
-          {
-            auto unknown_atom = parse_header_only_atom(header.value());
-            if (unknown_atom != nullptr)
-            {
-              current_atoms.push_back(std::move(unknown_atom));
-              bytes_read += header.value().size();
-            }
-          }
+        bytes_read += header.value().size();  
+      } else {
+        auto unknown_atom = parse_header_only_atom(header.value());
+        if (unknown_atom != nullptr)
+        {
+          current_atoms.push_back(std::move(unknown_atom));
+          bytes_read += header.value().size();
+        }
+      }
   }
 
   return current_atoms;
@@ -254,7 +254,6 @@ bool atom_parser::parse()
   for (auto&& a : atoms_)
     a->print_atom_info();
 
-	return true;
+  return true;
 }
-
 
