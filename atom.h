@@ -40,9 +40,7 @@ struct atom_header_raw
 
   bool is_container_type() const
   {
-    static const std::unordered_set<std::string> container_types_{"moov", "trak"};
-    // static const std::unordered_set<std::string> contanier_types_{"moov", "trak", 
-    // "udta", "tref", "imap", "mdia", "minf", "stbl", "edts", "mdra", "rmra", "imag", "vnrp", "dinf"};
+    static const std::unordered_set<std::string> container_types_{"moov", "trak", "mdia", "minf", "stbl"};
     return container_types_.find(type()) != container_types_.cend();
   }
 
