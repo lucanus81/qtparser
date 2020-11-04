@@ -7,13 +7,13 @@
 class header_only_parsed_atom : public base_parsed_atom
 {
 public:
-	header_only_parsed_atom(uint64_t size, std::string const& type)
-		: base_parsed_atom{size, type} {}
+  header_only_parsed_atom(uint64_t size, std::string const& type)
+    : base_parsed_atom{size, type} {}
 
-	void print_atom_info() const override
-	{
-		std::cout <<"INFO: atom: size = " <<size_ <<" bytes, type = " <<type_ <<"\n";
-	}
+  void print_atom_info() const override
+  {
+    std::cout <<"INFO: atom: size = " <<size_ <<" bytes, type = " <<type_ <<"\n";
+  }
 };
 
 #endif

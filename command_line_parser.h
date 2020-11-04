@@ -8,18 +8,18 @@
  */
 struct command_line_parser 
 {
-	bool parse(int argc, char** argv);
-	std::string filename() const
-	{
-		return filename_;
-	}
+  bool parse(int argc, char** argv);
+  std::string filename() const
+  {
+    return filename_;
+  }
 
 private:
-	std::string filename_;
+  std::string filename_;
 
-	void show_help() const;
-	bool validate_parameters() const;
-	bool validate_filename() const;
+  void show_help() const;
+  bool validate_parameters() const;
+  bool validate_filename() const;
 };
 
 #endif
