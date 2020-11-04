@@ -32,11 +32,11 @@ struct atom_header_raw
     return mnemonic_to_string(type_);
   }
 
-	bool is_non_container_type() const
-	{
-		static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip", "wide", "tkhd"};
-		return non_container_types_.find(type()) != non_container_types_.cend();
-	}
+  bool is_non_container_type() const
+  {
+    static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip", "wide", "tkhd"};
+    return non_container_types_.find(type()) != non_container_types_.cend();
+  }
 
   bool is_container_type() const
   {
@@ -44,42 +44,19 @@ struct atom_header_raw
     return container_types_.find(type()) != container_types_.cend();
   }
 
-	uint64_t remaining_size() const
-	{
-		return size_ == HAS_EXTENDED_SIZE
-			? extended_size_ - sizeof(size_) - sizeof(type_) - sizeof(extended_size_)
-			: size_ - sizeof(size_) - sizeof(type_);
-	}
+  uint64_t remaining_size() const
+  {
+    return size_ == HAS_EXTENDED_SIZE
+      ? extended_size_ - sizeof(size_) - sizeof(type_) - sizeof(extended_size_)
+      : size_ - sizeof(size_) - sizeof(type_);
+  }
 
-	friend std::ostream& operator<<(std::ostream& os, atom_header_raw const& header)
-	{
-		os <<"size = " <<header.size() <<", type = " <<header.type();
-		os <<", extended size = " <<(header.extended_size_ == HAS_EXTENDED_SIZE ? "yes" : "no");	
-		return os;
-	}
-};
-
-// UNUSED? They appear in Apple's documentation, but I cannot find these fields in any .MOV
-// file I have checked
-struct qt_atom_container_header
-{
-	uint8_t reserved[10]{0};
-	uint16_t lock_count_;
-};
-
-struct qt_atom_header
-{
-	static const uint32_t ROOT_ATOM_ID{1};
-	static const uint16_t NO_CHILDREN{0};
-
-	uint32_t size_;
-	uint32_string_shared type_;
-	uint32_t atom_id_;
-	uint16_t reserved_16bits_{0};
-	uint16_t child_count_;
-	uint32_t reserved_32bits_{0};
-
-	bool is_leaf() const { return child_count_ == NO_CHILDREN; }
+  friend std::ostream& operator<<(std::ostream& os, atom_header_raw const& header)
+  {
+    os <<"size = " <<header.size() <<", type = " <<header.type();
+    os <<", extended size = " <<(header.extended_size_ == HAS_EXTENDED_SIZE ? "yes" : "no");	
+    return os;
+  }
 };
 
 #endif
