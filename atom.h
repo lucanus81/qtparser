@@ -8,29 +8,29 @@
 #include <string>
 
 union uint32_string_shared {
-	uint32_t value_;
-	uint8_t mnemonic_name_[4];
+  uint32_t value_;
+  uint8_t mnemonic_name_[4];
 };
 
 std::string mnemonic_to_string(uint32_string_shared const& value);
 
 struct atom_header_raw
 {
-	static const uint32_t HAS_EXTENDED_SIZE{1};
+  static const uint32_t HAS_EXTENDED_SIZE{1};
+  
+  uint32_t size_;
+  uint32_string_shared type_;
+  uint64_t extended_size_;
 
-	uint32_t size_;
-	uint32_string_shared type_;
-	uint64_t extended_size_;
+  uint64_t size() const 
+  { 
+    return size_ == HAS_EXTENDED_SIZE ? extended_size_ : size_; 
+  }
 
-	uint64_t size() const 
-	{ 
-		return size_ == HAS_EXTENDED_SIZE ? extended_size_ : size_; 
-	}
-
-	std::string type() const
-	{
-		return mnemonic_to_string(type_);
-	}
+  std::string type() const
+  {
+    return mnemonic_to_string(type_);
+  }
 
 	bool is_non_container_type() const
 	{
