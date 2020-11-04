@@ -9,7 +9,8 @@
 
 struct buffer_reader {
 	enum class BYTES_ORDER { SWAP_BYTES, DO_NOT_SWAP_BYTES }; 
-	/**
+	
+  /**
 	 * Constructor that opens a file in binary mode (read only)
 	 */
 	buffer_reader(std::string const& filename) {

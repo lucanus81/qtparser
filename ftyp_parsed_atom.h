@@ -8,7 +8,6 @@
 class ftype_parsed_atom : public base_parsed_atom
 {
 public:
-
 	ftype_parsed_atom(uint64_t size, std::string const& type)
 		: base_parsed_atom{size, type} {}
 

@@ -7,6 +7,11 @@
 #include <memory>
 #include <iostream>
 
+/**
+ * Read an atom header:
+ * - 4 bytes: size
+ * - 4 bytes: type
+ */
 std::optional<atom_header_raw> atom_parser::read_atom_header()
 {
 	uint32_t full_atom_size;
@@ -28,6 +33,9 @@ std::optional<atom_header_raw> atom_parser::read_atom_header()
 	return header;
 }
 
+/**
+ * Method used to parse an "ftyp" atom
+ */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw const& header)
 {
 	auto ftyp = std::make_unique<ftype_parsed_atom>(header.size(), header.type()); 
@@ -59,6 +67,10 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw c
 	return ftyp;
 }
 
+/**
+ * Method used to parse a track header atom, used to extract info about
+ * width and height of a single track.
+ */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw const& header)
 {
   auto tkhd = std::make_unique<tkhd_parsed_atom>(header.size(), header.type());
@@ -131,6 +143,10 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw c
   return tkhd;
 }
 
+/**
+ * Used to parse atoms that consist only of headers.
+ * This function also skips any additional data that we do not want to parse.
+ */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
 {
 	auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
@@ -146,6 +162,9 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_heade
 	return header_only;
 }
 
+/**
+ * Method used to parse a single atom. Based on each type, we call a different parser. 
+ */
 std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
 {
 	if (header.type() == "ftyp")
@@ -160,6 +179,13 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw c
 	return {};
 }
 
+/**
+ * Main method used to parse a MOV file.
+ * We have pretty much 3 paths for this:
+ * - we have an atom to parse
+ * - we have an atom container
+ * - we have an atom/container that needs to be skipped (in this case we simply ignore the data)
+ */
 std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t atom_total_bytes)
 {
   uint64_t bytes_read{0};
@@ -173,19 +199,23 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
   	
 	  if (header.value().is_non_container_type()) {
       auto parsed_atom=parse_base_atom(header.value());
-      if (parsed_atom != nullptr) {
+      if (parsed_atom != nullptr) 
+      {
         current_atoms.push_back(std::move(parsed_atom));
         bytes_read += header.value().size();
       }
     } else
-        if (header.value().is_container_type()) {
+        if (header.value().is_container_type()) 
+        {
           std::vector<std::unique_ptr<base_parsed_atom>> children = parse_atoms(header.value().remaining_size());
           auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
           for (auto&& child : children)
             container_atom->add_child(std::move(child));
-          current_atoms.push_back(std::move(container_atom));  
+          current_atoms.push_back(std::move(container_atom));
+
           bytes_read += header.value().size();  
-        } else {
+        } else 
+          {
             auto unknown_atom = parse_header_only_atom(header.value());
             if (unknown_atom != nullptr)
             {
@@ -198,6 +228,9 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
   return current_atoms;
 }
 
+/**
+ * Method used to verify whether we have a real MOV file (based on Apple's documentation)
+ */
 void atom_parser::verify_file_type() const
 {
   if (atoms_.size() == 0)
@@ -208,6 +241,9 @@ void atom_parser::verify_file_type() const
       std::cout <<"WARN: the specified file doesn't seem to be a MOV file\n";
 }
 
+/**
+ * Main function used to parse a MOV file
+ */
 bool atom_parser::parse()
 {
   atoms_ = parse_atoms(reader_.size());
