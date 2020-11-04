@@ -1,6 +1,7 @@
 #include "atom_parser.h"
 #include "ftyp_parsed_atom.h"
 #include "header_only_parsed_atom.h"
+#include "parsed_atom_container.h"
 
 #include <memory>
 #include <iostream>
@@ -83,27 +84,51 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw c
 	return {};
 }
 
+std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t atom_total_bytes)
+{
+  uint64_t bytes_read{0};
+  std::vector<std::unique_ptr<base_parsed_atom>> current_atoms;
+
+  while (bytes_read < atom_total_bytes)
+  {
+  	std::optional<atom_header_raw> header{read_atom_header()};
+		if (!header.has_value())
+			return {};
+  	
+    std::cout <<"DEBUG: " <<header.value() <<' ';
+		std::cout <<"DEBUG: " <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
+	  if (header.value().is_non_container_type()) {
+      auto parsed_atom=parse_base_atom(header.value());
+      if (parsed_atom != nullptr) {
+        current_atoms.push_back(std::move(parsed_atom));
+        bytes_read += header.value().size();
+      }
+    } else
+        if (header.value().is_container_type()) {
+          std::vector<std::unique_ptr<base_parsed_atom>> children = parse_atoms(header.value().remaining_size());
+          auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
+          for (auto&& child : children)
+            container_atom->add_child(std::move(child));
+          current_atoms.push_back(std::move(container_atom));  
+          bytes_read += header.value().size();  
+        } else {
+            auto unknown_atom = parse_header_only_atom(header.value());
+            if (unknown_atom != nullptr)
+            {
+              current_atoms.push_back(std::move(unknown_atom));
+              bytes_read += header.value().size();
+            }
+          }
+  }
+
+  return current_atoms;
+}
+
 bool atom_parser::parse()
 {
-	while (reader_.has_more_bytes())
-	{
-		std::optional<atom_header_raw> header{read_atom_header()};
-		if (!header.has_value())
-			return false;
-		
-		std::cout <<"DEBUG: " <<header.value() <<' ';
-		std::cout <<"DEBUG: " <<", non-container-type = " <<header.value().is_non_container_type() <<'\n';
-		if (header.value().is_non_container_type())
-		{
-			auto parsed_atom=parse_base_atom(header.value());
-			if (parsed_atom != nullptr)
-				parsed_atom->print_atom_info();
-		} else {
-			auto buffer{ std::make_unique<char[]>(header.value().remaining_size()) };
-			if (!reader_.read(buffer, header.value().remaining_size()))
-				return false;
-		}
-	}
+  auto atoms = parse_atoms(reader_.size());
+  for (auto&& a : atoms)
+    a->print_atom_info();
 
 	return true;
 }

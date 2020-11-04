@@ -38,6 +38,14 @@ struct atom_header_raw
 		return non_container_types_.find(type()) != non_container_types_.cend();
 	}
 
+  bool is_container_type() const
+  {
+    static const std::unordered_set<std::string> container_types_{"moov", "trak"};
+    // static const std::unordered_set<std::string> contanier_types_{"moov", "trak", 
+    // "udta", "tref", "imap", "mdia", "minf", "stbl", "edts", "mdra", "rmra", "imag", "vnrp", "dinf"};
+    return container_types_.find(type()) != container_types_.cend();
+  }
+
 	uint64_t remaining_size() const
 	{
 		return size_ == HAS_EXTENDED_SIZE
