@@ -1,0 +1,45 @@
+This project was created on MacOS using "port" to install make, gcc, gdb.
+
+In order to run it, just type:
+
+shell> make
+shell> ./mov_parser -f <full-path-to-your-file>
+
+when using
+shell> ./mov_parser -h
+an help will be displayed.
+
+-----------------------------------------------
+
++------+
+| main |
++------+
+   |
+   |
+   +----> | command_line_parser |
+   |
+   |      +---------------+       +---------------+
+   +----> |  atom_parser  | ----> | buffer_reader |
+          +---------------+       +---------------+
+          | atoms_ : 1..* |
+          +---------------+
+
+
++------------------+
+| base_parsed_atom | <-------------------+
++------------------+                     |
+     |                                   | 
+     |     +------------------+          |
+     +---> | ftyp_parsed_atom |          |
+     |     +------------------+          |
+     |                                   |
+     |     +-------------------------+   |
+     +---> | header_only_parsed_atom |   |
+     |     +-------------------------+   |
+     |                                   |
+     |     +-------------------------+   | (recursive structure)
+     +---> |  parsed_atom_container  |   |
+           +-------------------------+   |
+           |                         |   |
+           | childred_: 0..*         | --+
+           +-------------------------+
