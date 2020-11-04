@@ -1,5 +1,6 @@
 CC=g++
-CXXFLAGS=-std=c++17 -g -fsanitize=address -fno-omit-frame-pointer
+CXXFLAGS=-std=c++17
+#$CXXFLAGS=-std=c++17 -g -fsanitize=address -fno-omit-frame-pointer
 
 SOURCE=$(wildcard *.cpp)
 OBJECTS=$(SOURCE:.cpp=.o)
