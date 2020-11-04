@@ -34,7 +34,7 @@ struct atom_header_raw
 
 	bool is_non_container_type() const
 	{
-		static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip", "wide"};
+		static const std::unordered_set<std::string> non_container_types_{"ftyp", "free", "skip", "wide", "tkhd"};
 		return non_container_types_.find(type()) != non_container_types_.cend();
 	}
 
@@ -56,13 +56,13 @@ struct atom_header_raw
 	friend std::ostream& operator<<(std::ostream& os, atom_header_raw const& header)
 	{
 		os <<"size = " <<header.size() <<", type = " <<header.type();
-		//for (size_t i=0; i<sizeof(type_); ++i)
-		//	os <<header.type_.mnemonic_name_[i];
 		os <<", extended size = " <<(header.extended_size_ == HAS_EXTENDED_SIZE ? "yes" : "no");	
 		return os;
 	}
 };
 
+// UNUSED? They appear in Apple's documentation, but I cannot find these fields in any .MOV
+// file I have checked
 struct qt_atom_container_header
 {
 	uint8_t reserved[10]{0};
@@ -75,19 +75,13 @@ struct qt_atom_header
 	static const uint16_t NO_CHILDREN{0};
 
 	uint32_t size_;
-	union {
-		uint32_t value_;
-		uint8_t mnemonic_name_[4];
-	} type_;
+	uint32_string_shared type_;
 	uint32_t atom_id_;
 	uint16_t reserved_16bits_{0};
 	uint16_t child_count_;
 	uint32_t reserved_32bits_{0};
 
-	bool is_leaf() const
-	{
-		return child_count_ == NO_CHILDREN;
-	}
+	bool is_leaf() const { return child_count_ == NO_CHILDREN; }
 };
 
 #endif

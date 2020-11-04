@@ -69,6 +69,11 @@ struct buffer_reader {
 		return bytes_left_ > 0;
 	}
 
+  size_t bytes_left() const
+  {
+    return bytes_left_;
+  }
+
 private:
 	void swap_bytes(char* buffer, size_t size)
 	{

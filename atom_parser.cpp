@@ -2,6 +2,7 @@
 #include "ftyp_parsed_atom.h"
 #include "header_only_parsed_atom.h"
 #include "parsed_atom_container.h"
+#include "tkhd_parsed_atom.h"
 
 #include <memory>
 #include <iostream>
@@ -58,6 +59,78 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw c
 	return ftyp;
 }
 
+std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw const& header)
+{
+  auto tkhd = std::make_unique<tkhd_parsed_atom>(header.size(), header.type());
+
+  uint8_t version{};
+  if (!reader_.read(version))
+    return {};
+  
+  uint8_t flags[3]={};
+  for (size_t i=0; i<sizeof(flags); ++i)
+    if (!reader_.read(flags[i]))
+      return {};
+  
+  uint32_t creation_time{};
+  if (!reader_.read(creation_time))
+    return {};
+
+  uint32_t modification_time{};
+  if (!reader_.read(modification_time))
+    return {};
+
+  uint32_t track_id{};
+  if (!reader_.read(track_id))
+    return {};
+  tkhd->track_id(track_id);
+  
+  uint32_t reserved{};
+  if (!reader_.read(reserved))
+    return {};
+  
+  uint32_t duration{};
+  if (!reader_.read(duration))
+    return {};
+  
+  uint64_t reserver_8_bytes{};
+  if (!reader_.read(reserver_8_bytes))
+    return {};
+  
+  uint16_t layer{};
+  if (!reader_.read(layer))
+    return {};
+  
+  uint16_t alternate_group{};
+  if (!reader_.read(alternate_group))
+    return {};
+  
+  uint16_t volume{};
+  if (!reader_.read(volume))
+    return {};
+  
+  uint16_t reserved_2_bytes;
+  if (!reader_.read(reserved_2_bytes))
+    return {};
+  
+  const size_t matrix_size_in_bytes{36};
+  auto matrix{ std::make_unique<char[]>(matrix_size_in_bytes) };
+  if (!reader_.read(matrix, matrix_size_in_bytes))
+    return {};
+  
+  uint32_t track_width{};
+  if (!reader_.read(track_width))
+    return {};
+  tkhd->track_width(track_width >> 16);
+  
+  uint32_t track_height{};
+  if (!reader_.read(track_height))
+    return {};
+  tkhd->track_height(track_height >> 16);
+
+  return tkhd;
+}
+
 std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
 {
 	auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
@@ -80,6 +153,9 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw c
 	else
 		if (header.type() == "free" || header.type() == "skip" || header.type() == "wide")
 			return parse_header_only_atom(header);
+    else
+      if (header.type() == "tkhd")
+        return parse_tkhd_atom(header);
 
 	return {};
 }
