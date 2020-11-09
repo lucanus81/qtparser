@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <iostream>
+#include <iterator>
 
 /**
  * Read an atom header:
@@ -201,28 +202,21 @@ vector_atoms_ptr atom_parser::parse_atoms(uint64_t atom_total_bytes)
     {
       auto parsed_atom=parse_base_atom(header.value());
       if (parsed_atom != nullptr) 
-      {
         current_atoms.push_back(std::move(parsed_atom));
-        bytes_read += header.value().size();
-      }
     } else 
       if (header.value().is_container_type()) 
       {
         vector_atoms_ptr children = parse_atoms(header.value().remaining_size());
         auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
-        for (auto&& child : children)
-          container_atom->add_child(std::move(child));
-        current_atoms.push_back(std::move(container_atom));
-
-        bytes_read += header.value().size();  
-      } else {
-        auto unknown_atom = parse_header_only_atom(header.value());
-        if (unknown_atom != nullptr)
+        current_atoms.insert(current_atoms.end(), std::make_move_iterator(children.begin()), std::make_move_iterator(children.end()));
+      } else 
         {
-          current_atoms.push_back(std::move(unknown_atom));
-          bytes_read += header.value().size();
+          auto unknown_atom = parse_header_only_atom(header.value());
+          if (unknown_atom != nullptr)
+            current_atoms.push_back(std::move(unknown_atom));
         }
-      }
+
+    bytes_read += header.value().size();
   }
 
   return current_atoms;
