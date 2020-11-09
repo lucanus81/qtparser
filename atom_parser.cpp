@@ -36,7 +36,7 @@ std::optional<atom_header_raw> atom_parser::read_atom_header()
 /**
  * Method used to parse an "ftyp" atom
  */
-std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw const& header)
+atom_ptr atom_parser::parse_ftyp_atom(atom_header_raw const& header)
 {
   auto ftyp = std::make_unique<ftype_parsed_atom>(header.size(), header.type()); 
 
@@ -71,7 +71,7 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_ftyp_atom(atom_header_raw c
  * Method used to parse a track header atom, used to extract info about
  * width and height of a single track.
  */
-std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw const& header)
+atom_ptr atom_parser::parse_tkhd_atom(atom_header_raw const& header)
 {
   auto tkhd = std::make_unique<tkhd_parsed_atom>(header.size(), header.type());
 
@@ -147,7 +147,7 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_tkhd_atom(atom_header_raw c
  * Used to parse atoms that consist only of headers.
  * This function also skips any additional data that we do not want to parse.
  */
-std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_header_raw const& header)
+atom_ptr atom_parser::parse_header_only_atom(atom_header_raw const& header)
 {
   auto header_only = std::make_unique<header_only_parsed_atom>(header.size(), header.type());
 
@@ -165,7 +165,7 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_header_only_atom(atom_heade
 /**
  * Method used to parse a single atom. Based on each type, we call a different parser. 
  */
-std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw const& header)
+atom_ptr atom_parser::parse_base_atom(atom_header_raw const& header)
 {
   if (header.type() == "ftyp")
     return parse_ftyp_atom(header);
@@ -186,10 +186,10 @@ std::unique_ptr<base_parsed_atom> atom_parser::parse_base_atom(atom_header_raw c
  * - we have an atom container
  * - we have an atom/container that needs to be skipped (in this case we simply ignore the data)
  */
-std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t atom_total_bytes)
+vector_atoms_ptr atom_parser::parse_atoms(uint64_t atom_total_bytes)
 {
   uint64_t bytes_read{0};
-  std::vector<std::unique_ptr<base_parsed_atom>> current_atoms;
+  vector_atoms_ptr current_atoms;
 
   while (bytes_read < atom_total_bytes)
   {
@@ -208,7 +208,7 @@ std::vector<std::unique_ptr<base_parsed_atom>> atom_parser::parse_atoms(uint64_t
     } else 
       if (header.value().is_container_type()) 
       {
-        std::vector<std::unique_ptr<base_parsed_atom>> children = parse_atoms(header.value().remaining_size());
+        vector_atoms_ptr children = parse_atoms(header.value().remaining_size());
         auto container_atom = std::make_unique<parsed_atom_container>(header.value().size(), header.value().type());
         for (auto&& child : children)
           container_atom->add_child(std::move(child));

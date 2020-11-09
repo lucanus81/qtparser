@@ -2,6 +2,8 @@
 #define _BASE_PARSED_ATOM_H
 
 #include <string>
+#include <memory>
+#include <vector>
 
 class base_parsed_atom
 {
@@ -19,5 +21,8 @@ protected:
   {
   }
 };
+  
+using atom_ptr = std::unique_ptr<base_parsed_atom>;
+using vector_atoms_ptr = std::vector<atom_ptr>;
 
 #endif
